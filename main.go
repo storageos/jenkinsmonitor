@@ -1,12 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/storageos/jenkinsmonitor/relaydriver"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 )
 
 type RESTRelay struct {
@@ -47,12 +49,61 @@ function relayOff(r) {
 
 </html>`
 
+func (r *RESTRelay) JSONState() ([]byte, error) {
+	errs := make([]string, 0)
+	m := struct {
+		R1 bool `json:"red"`
+		R2 bool `json:"yellow"`
+		R3 bool `json:"green"`
+		R4 bool `json:"alarm"`
+	}{}
+
+	var err error
+	m.R1, err = r.Driver.GetState(relaydriver.Relay1)
+	if err != nil {
+		errs = append(errs, err.Error())
+	}
+
+	m.R1, err = r.Driver.GetState(relaydriver.Relay1)
+	if err != nil {
+		errs = append(errs, err.Error())
+	}
+
+	m.R1, err = r.Driver.GetState(relaydriver.Relay1)
+	if err != nil {
+		errs = append(errs, err.Error())
+	}
+
+	m.R1, err = r.Driver.GetState(relaydriver.Relay1)
+	if err != nil {
+		errs = append(errs, err.Error())
+	}
+
+	if len(errs) > 0 {
+		return nil, fmt.Errorf("errors reading state from driver. [%s]", strings.Join(errs, ", "))
+	}
+
+	return json.Marshal(&m)
+}
+
 func (r *RESTRelay) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	fmt.Printf("Request %s, %s\n", req.Method, req.URL.Path)
 
 	if req.URL.Path == "/" {
 		resp.Header().Add("Content-Type", "text/html")
 		fmt.Fprintln(resp, inlineHTML)
+		return
+	}
+
+	if req.Method == "GET" {
+		buf, err := r.JSONState()
+		if err != nil {
+			resp.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(resp, err.Error())
+			return
+		}
+
+		fmt.Fprintf(resp, string(buf))
 		return
 	}
 

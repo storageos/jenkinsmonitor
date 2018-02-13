@@ -18,6 +18,23 @@ type Driver struct {
 	r4 gpio.Pin
 }
 
+func (d *Driver) GetState(relay int) (bool, error) {
+	fmt.Printf("Get state %v\n", relay)
+
+	switch relay {
+	case Relay1:
+		return d.r1.Get(), nil
+	case Relay2:
+		return d.r2.Get(), nil
+	case Relay3:
+		return d.r3.Get(), nil
+	case Relay4:
+		return d.r4.Get(), nil
+	}
+
+	return false, fmt.Errorf("unknown relay '%v'", relay)
+}
+
 func (d *Driver) SetHigh(relay int) {
 	fmt.Printf("Set high %v\n", relay)
 
@@ -35,6 +52,7 @@ func (d *Driver) SetHigh(relay int) {
 
 func (d *Driver) SetLow(relay int) {
 	fmt.Printf("Set low %v\n", relay)
+
 	switch relay {
 	case Relay1:
 		d.r1.Clear()
